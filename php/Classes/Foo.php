@@ -16,7 +16,6 @@ use Ramsey\Uuid\Uuid;
  **/
 
 class Author implements \JsonSerializable {
-	use ValidateDate;
 	use ValidateUuid;
 	/**
 	 * id for this Author; this is the primary key
@@ -128,10 +127,11 @@ class Author implements \JsonSerializable {
 			$this->authorAvatarUrl = null;
 			return;
 		}
-		//make sure author avatar url is less than 255 characters
-		$newAuthorAvatarUrl = strtolower(trim($newAuthorAvatarUrl));
-		if(ctype_xdigit($newAuthorAvatarUrl) === false) {
-			throw(new\RangeException("url is not valid"));
+
+
+		// verify the avatar URL will fit in the database
+		if(strlen($newAuthorAvatarUrl) > 255) {
+			throw(new \RangeException("url is not valid"));
 		}
 
 		// verify the author avatar url is secure
@@ -222,7 +222,7 @@ class Author implements \JsonSerializable {
 	 *
 	 * @param string $newAuthorHash
 	 * @throws \InvalidArgumentException if the hash is not secure
-	 * @throws \RangeException if the hash is not 97 characters
+	 * @throws \RangeException if the hash is not 95 characters
 	 * @throws \TypeError if profile hash is not a string
 	 */
 	public function setAuthorHash(?string $newAuthorHash): void {
@@ -232,13 +232,14 @@ class Author implements \JsonSerializable {
 			throw(new \InvalidArgumentException("profile password hash empty or insecure"));
 		}
 		//enforce the hash is really an Argon hash
-		$authorHashInfo = password_get_info($newAuthorHash);
-		if($authorHashInfo["algoName"] !== "argon2i") {
+		$profileHashInfo = password_get_info($newAuthorHash);
+		if($profileHashInfo["algoName"] !== "argon2i") {
 			throw(new \InvalidArgumentException("profile hash is not a valid hash"));
-		}
-		//enforce that the hash is exactly 97 characters.
-		if(strlen($newAuthorHash) !== 97) {
-			throw(new \RangeException("profile hash must be 97 characters"));
+	}
+
+		//enforce that the hash is exactly 95 characters.
+		if(strlen($newAuthorHash) !== 95) {
+			throw(new \RangeException("profile hash must be 95 characters"));
 		}
 		//store the hash
 		$this->authorHash = $newAuthorHash;
